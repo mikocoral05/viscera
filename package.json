@@ -1,0 +1,21 @@
+{
+  "name": "viscera",
+  "version": "0.1.0",
+  "description": "An advanced OCR wrapper around Tesseract with enriched text data output.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ocr",
+    "tesseract",
+    "text-extraction",
+    "image-processing",
+    "viscera"
+  ],
+  "author": "Mikael-Tenshio",
+  "license": "MIT",
+  "dependencies": {
+    "tesseract.js": "^6.0.1"
+  }
+}
