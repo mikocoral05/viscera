@@ -13,11 +13,15 @@ async function extractText(imagePath, options = {}) {
       ...options,
     });
 
-    const words = result.data.words.map((word) => ({
-      text: word.text,
-      confidence: word.confidence,
-      bbox: word.bbox,
-    }));
+    let words = result.data.words || [];
+
+    if (words.length === 0 && result.data.lines?.length > 0) {
+      words = result.data.lines.map((line) => ({
+        text: line.text,
+        confidence: line.confidence,
+        bbox: line.bbox || {},
+      }));
+    }
 
     return {
       text: result.data.text,
@@ -30,8 +34,8 @@ async function extractText(imagePath, options = {}) {
 }
 
 function averageConfidence(words) {
-  if (!words.length) return 0;
-  const total = words.reduce((sum, w) => sum + w.confidence, 0);
+  if (!words.length) return null; // Instead of 0
+  const total = words.reduce((sum, w) => sum + (w.confidence || 0), 0);
   return total / words.length;
 }
 
