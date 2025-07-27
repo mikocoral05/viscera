@@ -57,12 +57,25 @@ function detectPlatform(text) {
   return "unknown";
 }
 
-// Extracts monetary amount from the text
-function extractAmount(text) {
+// Extracts and formats monetary amount from the text
+function extractAmount(text, format = true) {
   const match = text.match(
     /(?:Amount|Total Amount Sent|You have sent|Paid|Total|Transferred)\D{0,10}([\d,]+\.\d{2})/
   );
-  return match ? parseFloat(match[1].replace(/,/g, "")) : null;
+
+  if (!match) return null;
+
+  const raw = parseFloat(match[1].replace(/,/g, ""));
+
+  if (format) {
+    // Return formatted as '25,000.00'
+    return raw.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  return raw; // Return numeric version
 }
 
 // Extracts a formatted date-time
