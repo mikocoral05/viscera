@@ -6,7 +6,6 @@ const presets = {
   bank_receipt: require("./presets/bank_receipt"),
   id_card: require("./presets/id_card"),
   invoice_or_bill: require("./presets/invoice_or_bill"),
-  transaction_screenshot: require("./presets/transaction_screenshot"),
   generic_text: require("./presets/generic_text"),
 };
 
