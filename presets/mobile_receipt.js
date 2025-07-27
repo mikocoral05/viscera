@@ -9,7 +9,10 @@
 // - ✅ Remitly, WorldRemit, Venmo, Cash App, Zelle
 // - ✅ Any receipt that includes recognizable keywords and formats
 
+import { findPhoneNumbersInText } from "libphonenumber-js";
 function parse(text) {
+  console.log(text);
+
   return {
     category: "mobile_receipt",
     platform: detectPlatform(text),
@@ -64,37 +67,98 @@ function extractAmount(text) {
 
 // Extracts a formatted date-time
 function extractDate(text) {
-  const match = text.match(
-    /(\w+ \d{1,2}, \d{4})\s+(\d{1,2}:\d{2} ?[APMapm]{2})/
+  // 1. e.g., "May 14, 2025 9:21 PM"
+  let match = text.match(
+    /([A-Za-z]+ \d{1,2}, \d{4})\s+(\d{1,2}:\d{2} ?[APMapm]{2})/
   );
-  if (match) return new Date(`${match[1]} ${match[2]}`);
+  if (match) return new Date(`${match[1]} ${match[2]} GMT+0800`);
 
-  const isoMatch = text.match(/(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
-  if (isoMatch) return new Date(`${isoMatch[1]}T${isoMatch[2]}`);
+  // 2. e.g., "14 May 2025 21:21"
+  match = text.match(/(\d{1,2}) ([A-Za-z]+) (\d{4})\s+(\d{1,2}:\d{2})/);
+  if (match)
+    return new Date(
+      `${match[2]} ${match[1]}, ${match[3]} ${match[4]} GMT+0800`
+    );
 
-  return null;
+  // 3. e.g., "2025-07-25T18:30", "2025-07-25 18:30"
+  match = text.match(/(\d{4})[-\/\.](\d{2})[-\/\.](\d{2})[ T](\d{2}:\d{2})/);
+  if (match)
+    return new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:00+08:00`);
+
+  // 4. e.g., "05-14-2025 9:21 PM"
+  match = text.match(
+    /(\d{2})[-\/\.](\d{2})[-\/\.](\d{4})\s+(\d{1,2}:\d{2} ?[APMapm]{2})/
+  );
+  if (match)
+    return new Date(`${match[3]}-${match[1]}-${match[2]} ${match[4]} GMT+0800`);
+
+  // 5. Raw Unix timestamps (optional, in milliseconds or seconds)
+  match = text.match(/(?:timestamp|unix|epoch)[^\d]*?(\d{10,13})/i);
+  if (match) {
+    const timestamp = parseInt(match[1], 10);
+    return new Date(timestamp < 1e12 ? timestamp * 1000 : timestamp);
+  }
+
+  return null; // fallback
 }
 
-// Extracts transaction/reference ID
+// Extracts transaction/reference ID (numbers or alphanumerics), excluding month names or dates.
 function extractReference(text) {
   const match = text.match(
-    /(?:Ref(?:erence)?|Transaction|Trans\s*ID|Confirmation)\s*[:#-]?\s*([A-Z\d\- ]{8,})/i
+    /(?:Ref(?:erence)?(?:\s*No)?\.?|Transaction|Trans\s*ID|Confirmation)[\s:]*([A-Z0-9 ]{8,40})/i
   );
-  return match ? match[1].replace(/[\s\-]+/g, "").trim() : null;
+  if (!match) return null;
+
+  let raw = match[1];
+
+  // Stop parsing at month names (May, June, etc.)
+  raw = raw.split(
+    /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t)?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/i
+  )[0];
+
+  // Remove all non-alphanumeric characters
+  return raw.replace(/[^\w]/g, "").trim() || null;
 }
 
 // Detects PH mobile number or international mobile numbers (basic)
 function extractPhone(text) {
-  const match = text.match(/(?:\+?\d{1,3})?[\s-]?(?:09|\d{2,3})\d{7,9}/);
-  return match ? match[0] : null;
+  const results = findPhoneNumbersInText(text, "US"); // or 'PH', or change per context
+  return results.length > 0 ? results[0].number.number : null;
 }
 
 // Extracts receiver name from patterns like "to John Smith"
 function extractReceiver(text) {
-  const match = text.match(
-    /(?:to|Receiver|Sent to|Paid to)[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})/i
-  );
-  return match ? match[1].trim() : null;
+  const lines = text
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  let receiver = null;
+
+  // First priority: standard keyword pattern
+  for (const line of lines) {
+    const match = line.match(/(?:to|Receiver|Sent to|Paid to)[:\s]+(.+)/i);
+    if (match) {
+      receiver = match[1].trim();
+      break;
+    }
+  }
+
+  // Fallback: name above phone number
+  if (!receiver) {
+    const phoneIndex = lines.findIndex((line) => /\+?\d[\d\s-]{8,}/.test(line));
+    if (phoneIndex > 0) {
+      const possibleName = lines[phoneIndex - 1];
+      // Only accept if it looks like a name (letters, possibly special chars, and not a number)
+      if (
+        /^[\p{L}«»\s.'-]{3,}$/u.test(possibleName) &&
+        !/\d/.test(possibleName)
+      ) {
+        receiver = possibleName;
+      }
+    }
+  }
+
+  return receiver;
 }
 
 // Extracts sender name from patterns like "From: Maria Cruz"
@@ -105,4 +169,4 @@ function extractSender(text) {
   return match ? match[1].trim() : null;
 }
 
-module.exports = { parse };
+export { parse };
