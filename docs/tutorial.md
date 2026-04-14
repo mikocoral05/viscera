@@ -215,7 +215,7 @@ const result = await extractText("./page.png", {
 
 For the current library state in this repository:
 
-- package version is now `0.2.0`
+- package version is now `0.2.1`
 - `libphonenumber-js` was updated to `^1.12.41`
 - `tesseract.js` stays on `^6.0.1` for now
 - `tesseract.js@7.0.0` exists, but upgrading cleanly should be handled as a separate compatibility task

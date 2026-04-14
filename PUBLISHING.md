@@ -17,10 +17,10 @@ Use this checklist when shipping a new `viscera` release.
 ```bash
 git status
 git add README.md CHANGELOG.md docs index.js package.json package-lock.json presets scripts test
-git commit -m "release: v0.2.0"
-git tag -a v0.2.0 -m "v0.2.0"
+git commit -m "release: vX.Y.Z"
+git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin main
-git push origin v0.2.0
+git push origin vX.Y.Z
 ```
 
 ## GitHub Pages
