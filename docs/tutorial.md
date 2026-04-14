@@ -219,3 +219,9 @@ For the current library state in this repository:
 - `libphonenumber-js` was updated to `^1.12.41`
 - `tesseract.js` stays on `^6.0.1` for now
 - `tesseract.js@7.0.0` exists, but upgrading cleanly should be handled as a separate compatibility task
+
+## 12. Liability and validation
+
+Viscera follows the normal MIT position: it is provided `as is`, without warranty, and with limitation of liability under the license.
+
+In practice, that means you should still validate extracted OCR data before using it in flows involving payments, identity checks, compliance, or any other high-impact decision.

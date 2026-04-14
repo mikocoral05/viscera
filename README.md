@@ -1,5 +1,11 @@
 # viscera
 
+[![npm version](https://img.shields.io/npm/v/viscera?color=1f6852&label=npm)](https://www.npmjs.com/package/viscera)
+[![docs](https://img.shields.io/badge/docs-live-8a3d24)](https://mikocoral05.github.io/viscera/)
+[![license](https://img.shields.io/npm/l/viscera?color=6f564a)](./LICENSE)
+
+![Viscera README banner](https://raw.githubusercontent.com/mikocoral05/viscera/main/docs/assets/viscera-readme-banner.png)
+
 Viscera is a helpful OCR toolkit on top of `tesseract.js` that gives you raw text, confidence metadata, built-in document presets, and a small parser system for turning OCR output into structured JSON.
 
 ## Why use it?
@@ -22,6 +28,7 @@ npm install viscera
 - Markdown tutorial: `docs/tutorial.md`
 - Release notes: `CHANGELOG.md`
 - Release checklist: `PUBLISHING.md`
+- README banner source: `docs/assets/viscera-readme-banner.png`
 
 ## Quick Start
 
@@ -43,6 +50,46 @@ async function run() {
 }
 
 run().catch(console.error);
+```
+
+## Start In 60 Seconds
+
+If you want a tiny repo layout to try the package immediately, this is enough:
+
+```text
+viscera-demo/
+  app.js
+  package.json
+```
+
+```json
+{
+  "name": "viscera-demo",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js"
+  }
+}
+```
+
+```bash
+npm install viscera
+npm start
+```
+
+```js
+const { extractText } = require("viscera");
+
+async function main() {
+  const result = await extractText("./receipt.png", {
+    preset: "mobile_receipt",
+  });
+
+  console.log(result.parsed);
+}
+
+main().catch(console.error);
 ```
 
 ## Built-In Presets
@@ -173,6 +220,13 @@ Run the example file with an image path and optional preset name:
 node example.js ./receipt.png mobile_receipt
 ```
 
+## Screenshot
+
+The README hero image is generated from repo assets instead of being a random one-off image.
+
+- Generator script: `scripts/generate-readme-banner.ps1`
+- Fixture source images: `docs/assets/fixtures/`
+
 ## Validation
 
 ```bash
@@ -186,3 +240,13 @@ npm run pack:preview
 - `libphonenumber-js` was updated to the latest compatible `1.x` release.
 - `tesseract.js` is still on `6.x` here on purpose because `7.x` is a new major version and should get a dedicated compatibility pass before upgrading the library.
 - The fixture images used by the docs are also used in the end-to-end OCR test coverage.
+
+## Liability
+
+Viscera is distributed under the MIT License and is provided `as is`, without warranty of any kind, express or implied.
+
+That means:
+
+- you should validate OCR results before using them in money, identity, compliance, or other high-impact workflows
+- the package should not be described as guaranteed safe, error-free, or fit for every purpose
+- production users should keep their own checks, review steps, and fallback handling around extracted data
