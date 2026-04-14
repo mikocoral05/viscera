@@ -1,15 +1,32 @@
-const { extractText } = require("./index");
+const { extractText, listPresets } = require("./index");
 
-(async () => {
-  const imagePath =
-    "C:/Users/ASUS/Downloads/3e8684e5-ed1b-422a-a507-d4575a7344ca.jpg";
+async function main() {
+  const imagePath = process.argv[2];
+  const preset = process.argv[3] || "generic_text";
+
+  if (!imagePath) {
+    console.error("Usage: node example.js <image-path> [preset]");
+    console.error(
+      `Available presets: ${listPresets()
+        .map((entry) => entry.name)
+        .join(", ")}`
+    );
+    process.exit(1);
+  }
 
   const result = await extractText(imagePath, {
-    preset: "mobile_receipt", // 🟢 Set this to match the type of image
+    preset,
+    logger: (message) => {
+      if (message.status === "recognizing text" && typeof message.progress === "number") {
+        console.log(`OCR progress: ${Math.round(message.progress * 100)}%`);
+      }
+    },
   });
 
-  console.log("Full Text:", result.text);
-  console.log("Confidence Average:", result.confidenceAvg);
-  console.log("Words:", result.words);
-  console.log("Parsed Output:", result.parsed); // 🆕 Structured data here
-})();
+  console.log(JSON.stringify(result, null, 2));
+}
+
+main().catch((error) => {
+  console.error(error.message);
+  process.exit(1);
+});

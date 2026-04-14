@@ -1,57 +1,93 @@
-/**
- * Supported ID Cards (Expected Patterns & Fields)
- *
- * ✅ Compatible / Expected ID Types:
- * - Philippine IDs: UMID, SSS, TIN, PhilHealth, Pag-IBIG, Postal ID, Voter's ID, National ID
- * - Driver’s Licenses (PH & foreign)
- * - Passports (any country with text OCR)
- * - National ID cards (NRIC, MyKad, Aadhaar, etc.)
- *
- * 🔍 Fields Extracted:
- * - fullName: Full name of cardholder
- * - idNumber: ID or license number
- * - birthDate: Date of birth (multiple formats supported)
- * - gender: M/F or Male/Female
- * - nationality: Nationality or citizenship
- * - address: Residential address (if available)
- */
+const { cleanValue, matchFirst, toDateOrNull, toLines } = require("./helpers");
+
+const keywords = [
+  "passport",
+  "license",
+  "birth date",
+  "nationality",
+  "citizenship",
+  "driver",
+  "national id",
+];
+
+const description =
+  "Extract common fields from IDs, passports, licenses, and government-issued identity cards.";
 
 function parse(text) {
-  const idNumber = (text.match(
-    /(?:ID(?:\s*Number)?|SSS|TIN|PhilHealth|License|Passport|UMID)\s*#?:?\s*([\w\-]+)/i
-  ) || [])[1];
-
-  const nameMatch =
-    text.match(
-      /(?:Name|Full Name)[:\-]?\s*([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/
-    ) ||
-    text.match(/([A-Z]{2,},?\s+[A-Z]{2,}.*)/) ||
-    [];
-
-  const birthday = (text.match(
-    /(?:Born|Birth\s*Date|Bday|DOB)\s*:?\s*(\w{3,9}\s+\d{1,2},?\s+\d{4}|\d{2,4}[-\/]\d{1,2}[-\/]\d{1,4})/i
-  ) || [])[1];
-  const date = birthday ? new Date(birthday) : null;
-
-  const gender = (text.match(/(?:Sex|Gender)[:\-]?\s*(Male|Female|M|F)/i) ||
-    [])[1];
-
-  const nationality = (text.match(
-    /(?:Nationality|Citizenship)[:\-]?\s*([A-Za-z]+)/i
-  ) || [])[1];
-
-  const address = (text.match(/(?:Address|Residence|Location)[:\-]?\s*(.+)/i) ||
-    [])[1];
+  const idNumber = matchFirst(text, [
+    /(?:ID(?:\s*Number)?|License|Passport|Document No|National ID|PhilHealth|UMID|TIN|SSS)\s*#?:?\s*([\w\-]+)/i,
+  ]);
+  const birthDateRaw = matchFirst(text, [
+    /(?:Born|Birth\s*Date|DOB|Date of Birth)\s*:?\s*([^\n]+)/i,
+    /(\d{2,4}[-/]\d{1,2}[-/]\d{1,4})/,
+  ]);
+  const gender = matchFirst(text, [/(?:Sex|Gender)\s*[:\-]?\s*(Male|Female|M|F)/i]);
+  const nationality = matchFirst(text, [
+    /(?:Nationality|Citizenship)\s*[:\-]?\s*([A-Za-z ]+)/i,
+  ]);
+  const address = matchFirst(text, [/(?:Address|Residence|Location)\s*[:\-]?\s*([^\n]+)/i]);
 
   return {
     category: "id_card",
-    fullName: nameMatch?.[1]?.trim() || null,
-    idNumber: idNumber?.trim() || null,
-    birthDate: isNaN(date) ? null : date,
-    gender: gender?.trim() || null,
-    nationality: nationality?.trim() || null,
-    address: address?.trim() || null,
+    documentType: detectDocumentType(text),
+    fullName: extractName(text),
+    idNumber: cleanValue(idNumber),
+    birthDate: toDateOrNull(birthDateRaw),
+    gender: cleanValue(gender),
+    nationality: cleanValue(nationality),
+    address: cleanValue(address),
   };
 }
 
-module.exports = { parse };
+function score(text) {
+  let total = 0;
+
+  if (/passport|driver|license|national id|citizenship|date of birth|dob/i.test(text)) {
+    total += 65;
+  }
+
+  if (/surname|given name|full name|sex|nationality/i.test(text)) {
+    total += 25;
+  }
+
+  if (/address|document no|id number/i.test(text)) {
+    total += 10;
+  }
+
+  return total;
+}
+
+function extractName(text) {
+  const explicit = matchFirst(text, [
+    /(?:Name|Full Name|Cardholder)\s*[:\-]?\s*([^\n]+)/i,
+  ]);
+  if (explicit) {
+    return explicit;
+  }
+
+  const lines = toLines(text);
+  const uppercaseLine = lines.find((line) => /^[A-Z][A-Z\s,'-]{5,}$/.test(line));
+  if (uppercaseLine) {
+    return cleanValue(uppercaseLine);
+  }
+
+  return null;
+}
+
+function detectDocumentType(text) {
+  if (/passport/i.test(text)) return "passport";
+  if (/driver/i.test(text) || /license/i.test(text)) return "drivers_license";
+  if (/national id/i.test(text)) return "national_id";
+  if (/umid/i.test(text)) return "umid";
+  if (/philhealth/i.test(text)) return "philhealth";
+  if (/postal id/i.test(text)) return "postal_id";
+  if (/voter/i.test(text)) return "voter_id";
+  return "id_card";
+}
+
+module.exports = {
+  description,
+  keywords,
+  parse,
+  score,
+};

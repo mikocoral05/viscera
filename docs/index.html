@@ -1,0 +1,293 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Viscera Docs</title>
+  <meta name="description" content="Browsable documentation for Viscera, an OCR toolkit built on top of Tesseract.js.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar reveal">
+      <a class="brand" href="#top">
+        <span class="brand-mark">V</span>
+        <span>
+          <strong>Viscera</strong>
+          <small>OCR toolkit docs</small>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="#quickstart">Quickstart</a>
+        <a href="#presets">Presets</a>
+        <a href="#fixtures">Fixtures</a>
+        <a href="#publish">Publish</a>
+      </nav>
+      <div class="toplinks">
+        <a class="ghost-button" href="https://github.com/mikocoral05/viscera" target="_blank" rel="noreferrer">GitHub</a>
+        <a class="ghost-button" href="./tutorial.md">Markdown Guide</a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero reveal">
+        <div class="hero-copy">
+          <p class="eyebrow">Version 0.2.0</p>
+          <h1>OCR that starts as text extraction and ends as structured JSON.</h1>
+          <p class="hero-text">
+            Viscera wraps <code>tesseract.js</code> with parser presets, richer OCR metadata,
+            offline-friendly options, and a lighter path to custom document extraction.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#quickstart">Start With Quickstart</a>
+            <a class="secondary-button" href="#fixtures">See Real Fixtures</a>
+          </div>
+          <ul class="hero-points">
+            <li>Built-in presets for receipts, invoices, IDs, and bank transfers</li>
+            <li>Preset suggestions when the upload type is unknown</li>
+            <li>Offline-capable OCR flows with local language data</li>
+          </ul>
+        </div>
+        <aside class="hero-panel">
+          <div class="panel-card panel-terminal">
+            <div class="panel-label">Install</div>
+            <pre><code>npm install viscera</code></pre>
+          </div>
+          <div class="panel-grid">
+            <article class="stat-card">
+              <span>Core APIs</span>
+              <strong>8</strong>
+              <small>from OCR to custom presets</small>
+            </article>
+            <article class="stat-card">
+              <span>Built-in presets</span>
+              <strong>6</strong>
+              <small>plus your own custom ones</small>
+            </article>
+            <article class="stat-card accent-card">
+              <span>Fixture images</span>
+              <strong>3</strong>
+              <small>used by docs and OCR tests</small>
+            </article>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section-grid reveal" id="quickstart">
+        <div>
+          <p class="eyebrow">Quickstart</p>
+          <h2>Get useful output fast.</h2>
+          <p>
+            If you only want OCR, use <code>extractText()</code>. If you already have text,
+            use <code>parseText()</code> and let Viscera suggest the right preset.
+          </p>
+        </div>
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>Quick start</span>
+            <button class="copy-button" type="button">Copy</button>
+          </div>
+<pre><code>const { extractText } = require("viscera");
+
+async function main() {
+  const result = await extractText("./receipt.png", {
+    preset: "mobile_receipt",
+    logger(message) {
+      if (message.status === "recognizing text") {
+        console.log(`OCR ${Math.round(message.progress * 100)}%`);
+      }
+    },
+  });
+
+  console.log(result.text);
+  console.log(result.parsed);
+}
+
+main().catch(console.error);</code></pre>
+        </div>
+      </section>
+
+      <section class="cards-row reveal">
+        <article class="mini-card">
+          <h3><code>extractText()</code></h3>
+          <p>Runs OCR, normalizes spacing, returns confidence metrics, and optionally parses the result.</p>
+        </article>
+        <article class="mini-card">
+          <h3><code>parseText()</code></h3>
+          <p>Useful when OCR already happened elsewhere and you only want structured output.</p>
+        </article>
+        <article class="mini-card">
+          <h3><code>createExtractor()</code></h3>
+          <p>Save shared defaults for apps that process the same document family over and over.</p>
+        </article>
+        <article class="mini-card">
+          <h3><code>registerPreset()</code></h3>
+          <p>Turn product-specific text formats into reusable JSON parsers.</p>
+        </article>
+      </section>
+
+      <section class="section-grid reveal" id="presets">
+        <div>
+          <p class="eyebrow">Presets</p>
+          <h2>Built for common documents, open to custom ones.</h2>
+          <p>
+            The built-in presets are intentionally practical. They get you moving for common uploads,
+            then you can graduate to your own parser once your app knows its document shapes better.
+          </p>
+          <div class="preset-list">
+            <div><strong>mobile_receipt</strong><span>Wallet receipts, remittances, transfer screenshots</span></div>
+            <div><strong>bank_receipt</strong><span>Bank transfers, deposit slips, transaction confirmations</span></div>
+            <div><strong>bdo</strong><span>Banco de Oro transfer screenshots and online banking receipts</span></div>
+            <div><strong>invoice_or_bill</strong><span>Invoices, statements, bills, purchase totals</span></div>
+            <div><strong>id_card</strong><span>Passports, licenses, and government identity cards</span></div>
+            <div><strong>generic_text</strong><span>Fallback summary when nothing else is a strong match</span></div>
+          </div>
+        </div>
+        <div class="code-card tall-card">
+          <div class="code-card-header">
+            <span>Auto-detect by text</span>
+            <button class="copy-button" type="button">Copy</button>
+          </div>
+<pre><code>const { parseText } = require("viscera");
+
+const result = parseText(`
+BDO Online Banking
+Transaction Reference: ABC-12345
+Sender: John Doe
+Receiver: Jane Santos
+Amount: PHP 2500.75
+`);
+
+console.log(result.preset);
+console.log(result.suggestedPresets);
+console.log(result.parsed);</code></pre>
+        </div>
+      </section>
+
+      <section class="showcase reveal" id="fixtures">
+        <div class="showcase-copy">
+          <p class="eyebrow">Fixture Gallery</p>
+          <h2>Browsable docs, real images, real OCR tests.</h2>
+          <p>
+            These sample images live in the repository and are used for end-to-end OCR coverage.
+            They also make the docs page feel less theoretical, which is always a nice quality-of-life win.
+          </p>
+          <div class="fixture-tabs" role="tablist" aria-label="Fixture selector">
+            <button class="fixture-tab is-active" type="button" data-fixture="mobile">Mobile Receipt</button>
+            <button class="fixture-tab" type="button" data-fixture="invoice">Invoice</button>
+            <button class="fixture-tab" type="button" data-fixture="bank">Bank Receipt</button>
+          </div>
+          <div class="fixture-meta">
+            <p id="fixture-name">mobile_receipt</p>
+            <p id="fixture-description">Wallet transfers with reference, receiver, amount, and timestamp fields.</p>
+          </div>
+        </div>
+        <div class="showcase-card">
+          <figure class="fixture-figure">
+            <img id="fixture-image" src="./assets/fixtures/mobile-receipt.png" alt="Sample mobile receipt fixture">
+            <figcaption id="fixture-caption">Sample fixture used in the OCR end-to-end suite.</figcaption>
+          </figure>
+          <div class="code-card compact-card">
+            <div class="code-card-header">
+              <span>Expected parsed shape</span>
+              <button class="copy-button" type="button">Copy</button>
+            </div>
+<pre id="fixture-json"><code>{
+  "category": "mobile_receipt",
+  "platform": "gcash",
+  "amountValue": 1250,
+  "currency": "PHP",
+  "reference": "700123456789",
+  "receiver": "Maria Cruz"
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-grid reveal">
+        <div>
+          <p class="eyebrow">Offline OCR</p>
+          <h2>Run against a local language file when you need predictable test fixtures.</h2>
+          <p>
+            The repo includes <code>eng.traineddata</code>, and the fixture tests use local OCR settings so
+            the suite does not depend on a network fetch.
+          </p>
+        </div>
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>Local language data</span>
+            <button class="copy-button" type="button">Copy</button>
+          </div>
+<pre><code>const path = require("node:path");
+const { extractText } = require("viscera");
+
+const repoRoot = process.cwd();
+
+const result = await extractText("./docs/assets/fixtures/mobile-receipt.png", {
+  preset: "mobile_receipt",
+  langPath: repoRoot,
+  gzip: false,
+  cacheMethod: "none",
+});</code></pre>
+        </div>
+      </section>
+
+      <section class="section-grid reveal" id="publish">
+        <div>
+          <p class="eyebrow">Publish Prep</p>
+          <h2>Ship-ready metadata, changelog, and package validation.</h2>
+          <p>
+            This repo is now much closer to a real npm release. The package metadata is filled in,
+            the changelog exists, and the publish path checks the package contents before release.
+          </p>
+          <ul class="checklist">
+            <li>Version bumped to <code>0.2.0</code></li>
+            <li><code>CHANGELOG.md</code> added for release notes</li>
+            <li>Repository, bugs, homepage, funding, and publish config included</li>
+            <li><code>npm test</code> and <code>npm run pack:preview</code> used to validate the release</li>
+          </ul>
+        </div>
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>Custom preset example</span>
+            <button class="copy-button" type="button">Copy</button>
+          </div>
+<pre><code>const { registerPreset, parseText } = require("viscera");
+
+registerPreset("membership_card", {
+  description: "Extract a member id and holder name",
+  keywords: ["member id", "membership"],
+  score(text) {
+    return /member id/i.test(text) ? 100 : 0;
+  },
+  parse(text) {
+    return {
+      category: "membership_card",
+      memberId: text.match(/Member ID:\s*([A-Z0-9-]+)/i)?.[1] || null,
+      name: text.match(/Name:\s*(.+)/i)?.[1] || null,
+    };
+  },
+});
+
+console.log(parseText("Member ID: MEM-2044\nName: Mika Tenshio", {
+  preset: "membership_card",
+}));</code></pre>
+        </div>
+      </section>
+
+      <section class="footer-note reveal">
+        <div>
+          <h2>GitHub Pages-friendly by default.</h2>
+          <p>
+            Because this page lives in <code>docs/index.html</code>, you can publish it from the repository's
+            <code>/docs</code> folder in GitHub Pages without a build step.
+          </p>
+        </div>
+        <a class="primary-button" href="https://github.com/mikocoral05/viscera" target="_blank" rel="noreferrer">Open Repository</a>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

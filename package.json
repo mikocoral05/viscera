@@ -1,22 +1,68 @@
 {
   "name": "viscera",
-  "version": "0.1.0",
-  "description": "An advanced OCR wrapper around Tesseract with enriched text data output.",
+  "version": "0.2.0",
+  "description": "A helpful OCR toolkit on top of Tesseract.js with structured presets, metadata, and parser utilities.",
   "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "example.js",
+    "presets",
+    "docs",
+    "CHANGELOG.md",
+    "PUBLISHING.md",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "example": "node example.js",
+    "pack:preview": "npm pack --dry-run",
+    "prepublishOnly": "npm test && npm run pack:preview",
+    "test": "node test/index.test.js"
   },
   "keywords": [
     "ocr",
     "tesseract",
     "text-extraction",
     "image-processing",
+    "ocr-wrapper",
+    "receipt-ocr",
+    "receipt-parser",
+    "invoice-parser",
+    "document-parser",
     "viscera"
   ],
   "author": "Mikael-Tenshio",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikocoral05/viscera.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikocoral05/viscera/issues"
+  },
+  "homepage": "https://github.com/mikocoral05/viscera#readme",
+  "funding": [
+    {
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/mikocoral"
+    },
+    {
+      "type": "buymeacoffee",
+      "url": "https://buymeacoffee.com/mikocoral"
+    }
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "libphonenumber-js": "^1.12.10",
+    "libphonenumber-js": "^1.12.41",
     "tesseract.js": "^6.0.1"
   }
 }
+
